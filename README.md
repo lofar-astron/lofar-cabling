@@ -1,32 +1,30 @@
 # Lofar cabling
 
-A Python 3 project that designs layouts for LOFAR fields
+A Python 3 project that generates cable layouts for future international LOFAR fields.
+Documentation for this program is currently only available in the form of docstrings.
 
-## Getting started
-
-These instructions will get you a copy of the project up and running on your local machine.
-
-??
+A very basic usage example is as follows:
+```
+import lofarcabling
+layout = lofarcabling.go(90, (40, -40), "points.csv", "layout.csv", True)
+````
+90 is the amount of degrees the field is rotated clockwise \
+(40, -40) are the x and y coordinates of the startpoint \
+"points.csv": The filelocation where you want to save a .csv with the coordinates of all antennas \
+"layout.csv": The filelocation where you want to save a .csv with the coordinates of the points and lines \
+True / False: True if you want the "improved" version of the field, False if you just want a quick version (True takes ~1:30 hour and False takes ~ minute)
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
-```
-Python 3
-```
+To run this project, you will need python 3 and some packages listed in requirements.txt
 
 ### Installing
 
-??
+To install, use `python setup.py install` (or see `python setup.py --help` for options).
 
 ## Running tests
 
-??
-
-## Deployment
-
-??
+Tests are in development still.
 
 ## Built with
 
