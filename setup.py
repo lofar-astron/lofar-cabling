@@ -1,7 +1,13 @@
 import setuptools
+from os.path import join, sep, split, abspath
+from glob import glob
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+here = split(abspath(__file__))[0]
+datapath = here + sep + 'share' + sep + 'lofarcabling' + sep + 'layouts'
+datafiles = glob(datapath + sep + '*')
 
 setuptools.setup(
     name="lofarcabling",
@@ -20,5 +26,5 @@ setuptools.setup(
     ],
     zip_safe = False,
     data_files = [('share/lofarcabling/layouts',
-                  ['share/lofarcabling/layouts/layout602.csv'])]
+                  datafiles)]
 )
