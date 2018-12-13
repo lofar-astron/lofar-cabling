@@ -30,7 +30,7 @@ Python 3
 
 ## Built with
 
-[Anaconda](https://anaconda.org/anaconda/anaconda-navigator) - GUI used to launch applications
+[Anaconda](https://anaconda.org/anaconda/anaconda-navigator) - GUI used to launch applications \
 [Jupyter Notebook](https://jupyter.org/) - The web application used
 
 ## Authors
