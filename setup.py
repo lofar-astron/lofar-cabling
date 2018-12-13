@@ -18,4 +18,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    zip_safe = False,
+    data_files = [('share/lofarcabling/layouts',
+                  ['share/lofarcabling/layouts/layout602.csv'])]
 )
