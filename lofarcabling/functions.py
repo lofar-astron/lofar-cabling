@@ -367,7 +367,7 @@ def run_layouts(pts):
     Rtrns:
         layout(dict): the layout that gave the best result paired with pts.
     """
-    location = (os.path.abspath('lofarcabling/layouts') + '\\')
+    location = (file_prefix() + '/share/lofarcabling/layouts' + os.path.sep)
     layouts = [[location + 'layout602.csv'], [location + 'layout603.csv'],
                [location + 'layout604.csv'], [location + 'layout605.csv'],
                [location + 'layout606.csv'], [location + 'layout607.csv'],
@@ -657,8 +657,8 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
          plot of points with best layout, name of best layout,
          and cost for reference.
     """
-    location = (os.path.abspath('lofarcabling/layouts') + '/')
-    field = center_field((location + '/examplefield.csv'), rot)
+    location = (file_prefix() + os.path.sep)
+    field = center_field((location + '/share/lofarcabling/layouts/examplefield.csv'), rot)
     field['Q1'] = loc
     field['R0'] = (rot, 0)
 
@@ -668,6 +668,11 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
 
     to_layout_csv(layout, namelayout)
 
+
+def file_prefix():
+	filepath = os.path.split(__file__)
+	filepath = os.path.split(filepath[0])
+	return filepath[0]
 
 def calc_cables():
     """This will be a brilliant function. Someday. Maybe"""
