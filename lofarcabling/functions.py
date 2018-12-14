@@ -447,10 +447,10 @@ def herring_intersections(points, layout):
                         if line.intersection(her).length >= 0.025:
                             for mok in lay:
                                 if lay[mok][1] == lay[l][0]:
-                                    intersections[intersection_id] = point,
-                                    pts[point],
-                                    line.intersection(her).length,
-                                    lay[l][0], lay[mok][0]
+                                    intersections[intersection_id] = \
+												point, pts[point], \
+                                                line.intersection(her).length, \
+                                                lay[l][0], lay[mok][0]
                                     intersection_id += 1
     return intersections
 
@@ -480,14 +480,12 @@ def fix_herrings(points, layout):
                         intersect = herring_intersections(points, layout)
                         for itrsct in intersect:
                             if itrsct in intersect:
-                                if layout[t][1] == intersect[itrsct][3] and \
-                                     layout[t][0] == intersect[itrsct][4]:
+                                if layout[t][1] == intersect[itrsct][3] and layout[t][0] == intersect[itrsct][4]:
                                     x_list, y_list = [], []
                                     k = 0.075
                                     i = 0
                                     if layout[t][0][0] == 'D' and \
                                        layout[t][1][0] == 'D':
-
                                         f = ((layout[intersect[itrsct][3]][0] -
                                              layout[intersect[itrsct][4]][0]),
                                              (layout[intersect[itrsct][3]][1] -
@@ -658,7 +656,9 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
          and cost for reference.
     """
     location = (file_prefix() + os.path.sep)
-    field = center_field((location + '/share/lofarcabling/layouts/examplefield.csv'), rot)
+    field = center_field((location +
+                         '/share/lofarcabling/layouts/examplefield.csv'),
+                         rot)
     field['Q1'] = loc
     field['R0'] = (rot, 0)
 
@@ -670,10 +670,11 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
 
 
 def file_prefix():
-	filepath = os.path.split(__file__)
-	filepath = os.path.split(filepath[0])
-	return filepath[0]
-
-def calc_cables():
-    """This will be a brilliant function. Someday. Maybe"""
-    return "Succes ermee"
+    """
+    Find the prefix for /lofar-cabling
+    Rtrns:
+        the prefix as a string
+    """
+    filepath = os.path.split(__file__)
+    filepath = os.path.split(filepath[0])
+    return filepath[0]
