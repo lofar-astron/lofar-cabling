@@ -2,20 +2,16 @@ import sys
 import numpy as np
 import scipy.sparse
 import shapely
-import lofarantpos.db
 from scipy.sparse import csgraph
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
 import os
-from matplotlib.patches import Circle
 from matplotlib.patches import Rectangle
-from shapely.geometry import Point, LineString, Polygon
+from shapely.geometry import LineString, Polygon
 import descartes
 import csv
 import math
-import logging
-
 
 def read_NMS_pts(ptscsv):
     """
