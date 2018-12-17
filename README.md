@@ -16,8 +16,8 @@ True / False: True if you want the "improved" version of the field, False if you
 
 ### Prerequisites
 
-To run this project, you will need python 3 and some packages listed in [requirements.txt](https://github.com/lofar-astron/lofar-cabling/blob/master/requirements.txt) \n
-\n
+To run this project, you will need python 3 and some packages listed in [requirements.txt](https://github.com/lofar-astron/lofar-cabling/blob/master/requirements.txt) \
+\
 Python version 3.6 or greater is required
 
 ### Installing
