@@ -208,7 +208,9 @@ def cable_len(points, layout, point):
 def cost(points, layout):
     """
     Calculates € cost of a LOFAR field.
-
+	c[0] * (cost per 85m cable)
+	c[1] * (cost per 115m cable)
+	t * (cost per meter digged)
     Args:
         points(dict): contains the origin of all cables,
                       and all antenna positions.
