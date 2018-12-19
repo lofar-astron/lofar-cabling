@@ -26,7 +26,7 @@ To install, use `python setup.py install` (or see `python setup.py --help` for o
 
 ## Running tests
 
-Tests are in development still.
+run_tests()
 
 ## Built with
 

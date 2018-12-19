@@ -193,7 +193,7 @@ def cable_len(points, layout, point):
        (int) amount short cables, (int) amount long cables.
     """
     distances = layout_matrix(points, layout, point)[0]
-    short = 0
+    short = -1
     long = 0
 
     for d in distances:
@@ -316,7 +316,7 @@ def draw_field(points, lay):
             ax.add_artist(Rectangle(((float(points[point][0]) - 1.5),
                                      (float(points[point][1]) - 1.5)), width=3,
                                     height=3, facecolor='lightgray', zorder=0))
-            for polygon in herrings(points[point]):
+            for polygon in herrings(points[point])[0]:
                 ax.add_patch(descartes.PolygonPatch(polygon,  fc='darkorchid'))
         if point[0] == 'Q':
             ax.plot(points[point][0], points[point][1], 'r.')
@@ -392,7 +392,7 @@ def run_layouts(pts):
         if c < bestcost:
             bestcost = c
             bestlayout = l[0]
-    return bestcost, bestlayout, costs
+    return bestcost, bestlayout
 
 
 def herrings(pt):
@@ -412,7 +412,7 @@ def herrings(pt):
                 continue
             offset = np.array([xoffset, yoffset])
             herrings += [Polygon(np.array(pt) + offset + oneherring)]
-    return herrings
+    return herrings, oneherring
 
 
 def herring_intersections(points, layout):
@@ -441,7 +441,7 @@ def herring_intersections(points, layout):
             line = LineString((startp, endp))
             for point in pts:
                 if point[0] == 'M':
-                    for her in herrings(pts[point]):
+                    for her in herrings(pts[point])[0]:
                         if line.intersection(her).length >= 0.025:
                             for mok in lay:
                                 if lay[mok][1] == lay[l][0]:
@@ -596,7 +596,7 @@ def clean_up(layout):
     return layout
 
 
-def find_layout(points_csv, fixherrings):
+def find_layout(points_csv, fixherrings, testing):
     """
     finds the best (currently known) layout for the given set of antennas.
 
@@ -634,7 +634,8 @@ def find_layout(points_csv, fixherrings):
         end = fix_herrings(points, lay)
 
     lay = clean_up(lay)
-    draw_field(points, lay)
+    if(not testing):
+	    draw_field(points, lay)
     return result, lay
 
 
@@ -662,7 +663,7 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
 
     to_points_csv(field, namepoints)
 
-    layout = find_layout(namepoints, fixherrings)[1]
+    layout = find_layout(namepoints, fixherrings, False)[1]
 
     to_layout_csv(layout, namelayout)
 
@@ -676,3 +677,76 @@ def file_prefix():
     filepath = os.path.split(__file__)
     filepath = os.path.split(filepath[0])
     return filepath[0]
+
+
+def run_tests():
+    px = file_prefix() + os.path.sep + 'share/lofarcabling/layouts/'
+    points = read_NMS_pts(px + 'pytestpts.csv')
+    layout = read_layout(px + 'pytestlay.csv')
+
+    test_read(points, layout)
+    test_reposition(px +  'pytestpts.csv', px +  'pytestlay.csv')
+    test_matrix(points, layout, 0)
+    test_cost(points, layout, 0)
+    test_finalizing()
+    test_layoutfinding(px + 'examplefield.csv')
+
+    print('All tests have been cleared!')
+
+
+def test_read(points, layout):
+    assert points == {'Q1': (0, 1.0), 'M0': (2.0, -100), 'M1': (3, 0)}
+    
+    assert layout == {'D1': (0, 0), 'T1': ('Q1', 'D1'), 'D2': (2.0, 0),
+                      'T2': ('D1', 'D2'), 'T3':('D2', 'M0'), 'T4': ('D2', 'M1')}
+    
+
+def test_reposition(pointscsv, layoutcsv):
+    assert (get_rad(pointscsv),
+            get_rad(layoutcsv)) == (270, 90) and rotate_origin((1, 1),
+            np.radians(270)) == (-1.0000000000000002, 0.9999999999999998) and \
+            center_field((pointscsv), 270) == {
+            'Q1': (-1.0, -1.8369701987210297e-16), 'M0': (100.0, 2.000000000000018),
+            'M1': (-5.51091059616309e-16, 3.0)} and center_layout(layoutcsv, 
+            90) == {'D1': (0.0, 0.0), 'T1': ('Q1', 'D1'),
+            'D2': (1.2246467991473532e-16, -2.0), 'T2': ('D1', 'D2'),
+            'T3': ('D2', 'M0'), 'T4': ('D2', 'M1')}
+
+
+def test_matrix(points, layout, p):
+    assert layout_matrix(points, layout, p)[0] == {'Q1': 0.0, 
+                                                   'M0': 103.0, 'M1': 4} and \
+           layout_matrix(points, layout, p)[1][0][3] == 1 and \
+           layout_matrix(points, layout, p)[1][3][4] == 2 and \
+           layout_matrix(points, layout, p)[1][4][1] == 100	
+
+
+def test_cost(points, layout, t):
+    assert trench_tot(points, layout, t) == 104 and \
+           cable_len(points, layout, t) == (1, 1) and cost(points, layout) == 2480
+
+
+def test_finalizing():
+    hrng = herrings((1, 1))[1]
+    assert np.all(hrng[0] == [-0.225, 0.225]) and np.all(hrng[1] == [ 0.225, 0.225]) and \
+           np.all(hrng[2] == [ 0.225, -0.225]) and np.all(hrng[3] == [-0.225, -0.225])
+    
+    p = {'M0': (2, 2)}
+    l  = {'D0': (0, 0), 'D1': (1, 0), 'D2': (2, 0), 'T1': ('D0', 'D1'),
+          'T2': ('D1', 'D2'), 'T3': ('D2', 'M0')}
+    assert herring_intersections(p, l) == {0: ('M0', (2, 2),
+                                          0.44999999999999996, 'D2', 'D1')}
+    fix_herrings(p, l)
+    assert herring_intersections(p, l) == {}
+
+    clean_up(l)
+    assert l == {'D0': (0, 0), 'D2': (1.55, 0.0),
+	            'T1': ('D0', 'D2'), 'T3': ('D2', 'M0')}
+
+
+def test_layoutfinding(pointscsv):
+    points = read_NMS_pts(pointscsv)
+    resultrun = run_layouts(points)
+    assert resultrun[0] == 32765 and os.path.split(resultrun[1])[1] == 'layout617.csv'
+    resultfind = find_layout(pointscsv, False, True)[0]
+    assert resultfind[0] == 32765 and os.path.split(resultfind[1])[1] == 'layout617.csv'
