@@ -18,7 +18,7 @@ def read_NMS_pts(ptscsv):
     Reads out a set of points from .csv and puts them in a dictionary
     Args:
         ptscsv(str): filename of the .csv
-    Rtrns:
+    Returns:
         pts(dict): A dictionary with all the relevant information from the .csv
     """
     pts = {}
@@ -39,7 +39,7 @@ def read_layout(layout):
     Reads out a layout from .csv and puts it in a dictionary
     Args:
         layout(str): filename of the .csv
-    Rtrns:
+    Returns:
         pts(dict): A dictionary with all the relevant information from the .csv
     """
     pts = {}
@@ -96,11 +96,12 @@ def layout_matrix(points, layout, start_point):
     """
     creates a matrix based on points and a layout and a dictionary with
     the distance for every point to start_point.
+	Also makes a dictionary with distances for every antenna.
     Args:
         points(dict): contains the cableorigin, and all antenna positions.
         layout(dict): contains all points and lines.
         start_point(int) : 0, if the cablehouse is set as the first of points.
-    Rtrns:
+    Returns:
         distance(dict): dict with distances for every point.
         mat: matrix based on points and layout.
     """
@@ -128,8 +129,8 @@ def layout_matrix(points, layout, start_point):
     for lineId in dist_lines:
         mat[dist_points[dist_lines[lineId][0]][2],
             dist_points[dist_lines[lineId][1]][2]] = distmat[
-            dist_points[dist_lines[lineId][0]][2],
-                dist_points[dist_lines[lineId][1]][2]]
+             dist_points[dist_lines[lineId][0]][2],
+             dist_points[dist_lines[lineId][1]][2]]
     for point in dist_points:
         if point[0] != 'D':
             dist = scipy.sparse.csgraph.dijkstra(
@@ -156,7 +157,7 @@ def trench_tot(points, layout, point):
     matrix = layout_matrix(points, layout, point)[1]
 
     for point in points:
-        if point[0] == 'Q' or point[0] == 'M':
+        if point[0] == 'Q' or point[0] == 'M': #filter out unexpected values like the rotation
             pointsids[point] = points[point][0], points[point][1], pid
             pid += 1
     for l in layout:
@@ -166,7 +167,7 @@ def trench_tot(points, layout, point):
 
     for l in layout:
         if l[0] == 'T':
-            for p in processedlines:
+            for p in processedlines: #avoid counting lines twice
                 if (layout[l][0] == processedlines[p][0] and
                     layout[l][1] == processedlines[p][1]) or \
                     (layout[l][0] == processedlines[p][1] and
@@ -194,15 +195,15 @@ def cable_len(points, layout, point):
     """
     distances = layout_matrix(points, layout, point)[0]
     short = -1
-    long = 0
+    longer = 0
 
     for d in distances:
         if d[0] != 'D':
             if distances[d] > 75:
-                long += 1
+                longer += 1
             else:
                 short += 1
-    return short, long
+    return short, longer
 
 
 def cost(points, layout):
@@ -221,16 +222,16 @@ def cost(points, layout):
     c = cable_len(points, layout, 0)
     t = trench_tot(points, layout, 0)
 
-    return(int(c[0]*170 + c[1]*230 + t*20))
+    return int(c[0]*170 + c[1]*230 + t*20)
 
 
 def get_rad(points_csv):
     """
-    only reads the radians given in a csv as:
+    only reads the radians from points noted like:
                                 R0 : {rad} : 0
     Args:
         points_csv(string): file name of a point set.
-    Rtrns:
+    Returns:
         rad(int): The integer that was read from the given .csv file.
     """
     with open(points_csv) as csvfile:
@@ -248,7 +249,7 @@ def center_field(points_csv, radians):
     Args:
         points_csv(string): file name of a pointset.
         radians: Amount of degrees the field is to be rotated clockwise.
-    Rtrns:
+    Returns:
         points(dict): The rotated field.
     """
     rad = np.radians(radians)
@@ -267,7 +268,7 @@ def center_layout(layout_csv, radians):
     Args:
         layout_csv(string): file name of a layout.
         radians: amount of degrees the field is to be rotated.
-    Rtrns:
+    Returns:
         points(dict): The rotated layout.
     """
     rad = np.radians(radians)
@@ -310,7 +311,7 @@ def draw_field(points, lay):
     miny = 999
     maxy = -999
     fig, ax = plt.subplots(figsize=(8, 8))
-    for point in points:
+    for point in points: #draw all points including squares and herrings for each.
         if point[0] == 'M' or point[0] == 'L':
             ax.plot(points[point][0], points[point][1], 'k.', markersize=3)
             ax.add_artist(Rectangle(((float(points[point][0]) - 1.5),
@@ -323,7 +324,7 @@ def draw_field(points, lay):
             ax.add_artist(Rectangle(((float(points[point][0]) - 1.5),
                                      (float(points[point][1]) - 1.5)), width=3,
                                     height=3, facecolor='red', zorder=0))
-    for l in lay:
+    for l in lay: #draw all lines
         if l[0] == 'D':
             ax.plot(lay[l][0], lay[l][1], 'y.', markersize=3)
         elif l[0] == 'T':
@@ -341,7 +342,7 @@ def draw_field(points, lay):
                 scdy = points[lay[l][1]][1]
             ax.plot((fstx, scdx), (fsty, scdy), color='black',
                     linewidth=0.5, zorder=0.5)
-    for point in points:
+    for point in points: #this part fits the plot to fit all points
         if point[0] != 'R':
             if points[point][0] < minx:
                 minx = points[point][0]
@@ -358,12 +359,14 @@ def draw_field(points, lay):
 
 def run_layouts(pts):
     """
-    tries every possible loadout and saves the loadout with the lowest cost.
+    tries every possible layout and saves the layout with the lowest cost
+	in combination with given points dictionary.
     Args:
         Pts(dict): dict containing 'Q1' as cableorigin,
         'M0' - 'M95' as antennas and 'R0' as rotation.
-    Rtrns:
-        layout(dict): the layout that gave the best result paired with pts.
+    Returns:
+        bestlayout(dict): the layout that gave the best result paired with pts.
+		bestcost(int): estimated cost of the best field.
     """
     location = (file_prefix() + '/share/lofarcabling/layouts' + os.path.sep)
     layouts = [[location + 'layout602.csv'], [location + 'layout603.csv'],
@@ -419,8 +422,11 @@ def herring_intersections(points, layout):
     """
     finds all points where lines intersect with herrings
     Args:
-        points(str): file location with .csv of points
-        layout(str): file location with .csv of layout
+        points(dict: dict with the locations of every point
+        layout(dict): dict containing the layout
+    Returns:
+        intersections(dict): dictionary containing all intersections and some relevant
+                             information about every intersection
     """
     pts = points
     lay = layout
@@ -446,7 +452,7 @@ def herring_intersections(points, layout):
                             for mok in lay:
                                 if lay[mok][1] == lay[l][0]:
                                     intersections[intersection_id] = \
-												point, pts[point], \
+                                                point, pts[point], \
                                                 line.intersection(her).length, \
                                                 lay[l][0], lay[mok][0]
                                     intersection_id += 1
@@ -459,10 +465,10 @@ def fix_herrings(points, layout):
     herrings that belong to the antennas, changes them so
     they no longer intersect.
     Args:
-        points(str): file location with .csv of points
-        layout(str): file location with .csv of layout
+        points(dict: dict with the locations of every point
+        layout(dict): dict containing the layout
     """
-    intersect = herring_intersections(points, layout)
+    intersect = herring_intersections(points, layout) #find intersections
     x, y = 0, 0
     tot = 0
     cur = -1
@@ -471,15 +477,15 @@ def fix_herrings(points, layout):
             tot = i
 
     for l in layout:
-        if l[0] == 'D':
+        if l[0] == 'D': #for every piket
             for t in layout:
-                if t[0] == 'T':
+                if t[0] == 'T': #for every line
                     if layout[t][1] == l:
                         intersect = herring_intersections(points, layout)
                         for itrsct in intersect:
-                            if itrsct in intersect:
-                                if layout[t][1] == intersect[itrsct][3] and layout[t][0] == intersect[itrsct][4]:
-                                    x_list, y_list = [], []
+                            if itrsct in intersect: #alterin dictionary during loop so checing.
+                                if layout[t][1] == intersect[itrsct][3] and layout[t][0] == intersect[itrsct][4]: 
+                                    x_list, y_list = [], [] #if line matches an intersection, make a list with positions to check
                                     k = 0.075
                                     i = 0
                                     if layout[t][0][0] == 'D' and \
@@ -514,15 +520,15 @@ def fix_herrings(points, layout):
                                                       itrsct][3]][1] +
                                                       f[1]*(0+k))
                                         k += 0.075
-                                    unsolved, stillhere = True, True
+                                    unsolved, stillhere = True, True #loop check
                                     many = 0
                                     while unsolved:
-                                        if many > 10:
+                                        if many > 10: #give up solving after failing ten attempts
                                             unsolved = False
                                             cur += 1
                                             many = 0
                                             break
-                                        if i <= 21:
+                                        if i <= 21: #try moving according to list, check if intersection is gone
                                             templayout = layout
                                             x, y = x_list[i], y_list[i]
                                             i += 1
@@ -539,12 +545,12 @@ def fix_herrings(points, layout):
                                                     unsolved = False
                                                     intersect = checkinct
                                                     cur += 1
-                                            else:
+                                            else: #intersection solved, break
                                                 layout = templayout
                                                 unsolved = False
                                                 intersect = checkinct
                                                 cur += 1
-                                        else:
+                                        else: #update positions to check untill ten attempts
                                             p = 0
                                             for x in x_list:
                                                 x_list[p] = x_list[p] + 0.075
@@ -565,7 +571,7 @@ def clean_up(layout):
     firstenc = {}
     secondenc = {}
     poplist = {}
-    for d in layout:
+    for d in layout: #check angles and point connections to detemine its value.
         count = 0
         if d[0] == 'D':
             for l in layout:
@@ -609,9 +615,11 @@ def find_layout(points_csv, fixherrings, testing):
         where q is the cablehouse/point of origin,
         where m is an antenna,
         where r is degrees this field is rotated.
-    Rtrns:
-        plot of points with best layout,
-        name of best layout, and cost for reference.
+		fixherrings(bool): True takes ~90min False takes ~1min but doesn't solve intersections
+		testing(bool): False doesn't draw the field(for testing purposes)
+    Returns:
+        result(dict): plot of points with best layout,
+        lay(string): name of best layout, and cost for reference.
     """
     radpts = get_rad(points_csv)
     zerop = 360-radpts
@@ -630,11 +638,11 @@ def find_layout(points_csv, fixherrings, testing):
     points = center_field(points_csv, 0)
     lay = center_layout(result[1], raddiff)
 
-    if(fixherrings):
-        end = fix_herrings(points, lay)
+    if (fixherrings):
+        fix_herrings(points, lay)
 
     lay = clean_up(lay)
-    if(not testing):
+    if (not testing):
 	    draw_field(points, lay)
     return result, lay
 
@@ -650,9 +658,9 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
         namelayout(str): desired filelocation for layout
         fixherrings(bool): True if you want to fix herrings,
         False if you want to do it manually
-    Rtrns:
-         plot of points with best layout, name of best layout,
-         and cost for reference.
+    Returns:
+         No returns but it does draw a plot of points with best layout, name of best layout,
+         and prints cost for reference.
     """
     location = (file_prefix() + os.path.sep)
     field = center_field((location +
@@ -671,8 +679,8 @@ def go(rot, loc, namepoints, namelayout, fixherrings):
 def file_prefix():
     """
     Find the prefix for /lofar-cabling
-    Rtrns:
-        the prefix as a string
+    Returns:
+        filepath(string):the prefix
     """
     filepath = os.path.split(__file__)
     filepath = os.path.split(filepath[0])
@@ -680,6 +688,11 @@ def file_prefix():
 
 
 def run_tests():
+    """
+    This function calls all tests, no input is required and the output is a string
+    that tells you if the test were succesful.
+    the rest of the tests will not be provided with docstrings.
+    """
     px = file_prefix() + os.path.sep + 'share/lofarcabling/layouts/'
     points = read_NMS_pts(px + 'pytestpts.csv')
     layout = read_layout(px + 'pytestlay.csv')
